@@ -1,0 +1,342 @@
+{
+  "$id": "http://json-schema.org/draft-07/schema#",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "envelope": {
+
+      "description": "A representation of a person, company, organization, or place",
+      "definitions": {
+        "channel": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "product": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "_rev": {
+          "type": "string"
+        },
+        "version": {
+          "type": "number",
+          "description": "recipe version as number major.minor, min supported is 1.1"
+        },
+        "type": {
+          "enum": [
+            "Cluster",
+            "Image"
+          ],
+          "description": "Cluster | Image - type of processing"
+        },
+        "friendly_name": {
+          "type": "string",
+          "description": "Friendly display name"
+        },
+        "jobname": {
+          "description": "Label added to Pod that runs this recipe",
+          "type": "string",
+          "pattern": "^(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
+        },
+        "cloud_workflow": {
+          "description": "run recepe with cloud (learned before) workflow",
+          "type": "boolean"
+        },
+        "bucket": {
+          "description": "directory in Persistent Volume, where source data should be searched.This folder will be mounted into ${DATADIR} directory of Pod",
+          "type": "string",
+          "pattern": "^(([A-Za-z0-9/][-A-Za-z0-9_./]*)?[A-Za-z0-9])?$"
+        },
+        "DATADIR": {
+          "description": "directory with source files, On k8s {bucket} will be mounted here ",
+          "type": "string"
+        },
+        "OUTDIR": {
+          "description": "directory with result and intermediate files",
+          "type": "string"
+        },
+        "PREDICTOR_DIR": {
+          "type": "string",
+          "description": "directory with predictor's files = gm/pkl, predictor.pkl, tnorm.npy, default is OUTDIR"
+        },
+        "GEOJSON": {
+          "type": "object",
+          "description": "settings from result Geo-JSON file",
+          "properties": {
+            "schema": {
+              "enum": [
+                "Tangram"
+              ]
+            },
+            "band_map": {
+              "description": "map predictor bad-names c00-c0x to friendly names, {\"c00\":\"Water\"}",
+              "type": "object"
+            }
+          },
+          "if": {
+            "properties": {
+              "schema": {
+                "const": "Tangram"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "Raster"
+                ]
+              },
+              "tileSize": {
+                "type": "number",
+                "default": 512
+              },
+              "url": {
+                "type": "string",
+                "format": "uri-template"
+              },
+              "url_suffix": {
+                "type": "string",
+                "description": "suffix to add to the end of end-point url "
+              },
+              "url_subdomains": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-zA-Z0-9]+$"
+                },
+                "default": [
+                  "a",
+                  "b",
+                  "c",
+                  "d"
+                ]
+              },
+              "max_zoom": {
+                "type": "number",
+                "default": 24
+              },
+              "url_params": {
+                "description": "additional params appended to url query string, such as API key etc, key=value,key=value format",
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "if present, will be appended with COS.bucket/COS.ResultKey, otherwise will be build as  COS.endpoint/COS.bucket/COS.ResultKey"
+                  }
+                }
+              }
+            },
+            "required": [
+              "type",
+              "url"
+            ]
+          },
+          "else": {
+            "properties": {
+              "COGURL": {
+                "description": "URL template for Kepler viewer, this field injected as property into generated GeoJson file",
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "schema"
+          ]
+        },
+        "COS": {
+          "description": "IBM Cloud Storage  settings",
+          "type": "object",
+          "properties": {
+            "endpoint": {
+              "format": "uri"
+            },
+            "type": {
+              "enum": [
+                "Creodias",
+                "IBM",
+                "AWS"
+              ],
+              "description": "Type of endpoint:    Creodias | IBM | AWS, default  IBM"
+            },
+            "bucket": {
+              "type": "string"
+            },
+            "ResultKey": {
+              "type": "string",
+              "description": "file name without extension for results (GeoTIFF and Geojson) saved in COS bucket"
+            },
+            "credentials": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "endpoint",
+            "ResultKey",
+            "bucket"
+          ]
+        },
+        "channels": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "sigma": {
+              "$ref": "#/definitions/channel"
+            },
+            "sigma_avg": {
+              "$ref": "#/definitions/channel"
+            },
+            "sigmaVH": {
+              "$ref": "#/definitions/channel"
+            },
+            "sigmaVV": {
+              "$ref": "#/definitions/channel"
+            },
+            "sigmaHH": {
+              "$ref": "#/definitions/channel"
+            },
+            "coh": {
+              "$ref": "#/definitions/channel"
+            },
+            "coh_avg": {
+              "$ref": "#/definitions/channel"
+            },
+            "cohVH": {
+              "$ref": "#/definitions/channel"
+            },
+            "cohVV": {
+              "$ref": "#/definitions/channel"
+            },
+            "cohHH": {
+              "$ref": "#/definitions/channel"
+            }
+          }
+        },
+        "products": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "sigma": {
+              "$ref": "#/definitions/product"
+            },
+            "sigma_avg": {
+              "$ref": "#/definitions/product"
+            },
+            "sigmaVH": {
+              "$ref": "#/definitions/product"
+            },
+            "sigmaVV": {
+              "$ref": "#/definitions/product"
+            },
+            "coh": {
+              "$ref": "#/definitions/product"
+            },
+            "coh_avg": {
+              "$ref": "#/definitions/product"
+            },
+            "cohVH": {
+              "$ref": "#/definitions/product"
+            },
+            "cohVV": {
+              "$ref": "#/definitions/product"
+            }
+          }
+        },
+        "tag": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "type": "string"
+        },
+        "zone": {
+          "type": "array",
+          "maxItems": 2,
+          "minItems": 2,
+          "items": {
+            "type": "array",
+            "maxItems": 2,
+            "minItems": 2,
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "learn_channels": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "number"
+          }
+        },
+        "learn_gauss": {
+          "type": "number"
+        },
+        "predict_gauss": {
+          "type": "number"
+        },
+        "num_clusters": {
+          "type": "number"
+        },
+        "band_meta": {
+          "type": "array",
+          "description": "map of band id (order) to names and colors",
+          "items": {
+            "type": "object",
+            "properties": {
+              "band": {
+                "type": "number",
+                "description": "band ID (order)"
+              },
+              "name": {
+                "type": "string"
+              },
+              "color": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "band",
+              "name",
+              "color"
+            ]
+          }
+        },
+        "meta": {"type": "object"}
+      },
+
+
+      "required": [
+        "type",
+        "cloud_workflow",
+        "jobname",
+        "bucket",
+        "DATADIR",
+        "OUTDIR",
+        "PREDICTOR_DIR",
+        "channels",
+        "learn_channels",
+        "products"
+      ]
+    }
+  }
+}
+
+

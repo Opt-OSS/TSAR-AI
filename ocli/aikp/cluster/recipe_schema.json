@@ -1,0 +1,166 @@
+{
+  "$id": "http://json-schema.org/draft-07/schema#",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "envelope": {
+
+      "description": "Default cluster processing fields",
+      "definitions": {
+        "channel": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "product": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "PREDICTOR_DIR": {
+          "type": "string",
+          "description": "directory with predictor's files = gm/pkl, predictor.pkl, tnorm.npy, default is OUTDIR"
+        },
+        "channels": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "sigma": {
+              "$ref": "#/definitions/channel"
+            },
+            "sigma_avg": {
+              "$ref": "#/definitions/channel"
+            },
+            "sigmaVH": {
+              "$ref": "#/definitions/channel"
+            },
+            "sigmaVV": {
+              "$ref": "#/definitions/channel"
+            },
+            "sigmaHH": {
+              "$ref": "#/definitions/channel"
+            },
+            "coh": {
+              "$ref": "#/definitions/channel"
+            },
+            "coh_avg": {
+              "$ref": "#/definitions/channel"
+            },
+            "cohVH": {
+              "$ref": "#/definitions/channel"
+            },
+            "cohVV": {
+              "$ref": "#/definitions/channel"
+            },
+            "cohHH": {
+              "$ref": "#/definitions/channel"
+            }
+          }
+        },
+        "products": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "sigma": {
+              "$ref": "#/definitions/product"
+            },
+            "sigma_avg": {
+              "$ref": "#/definitions/product"
+            },
+            "sigmaVH": {
+              "$ref": "#/definitions/product"
+            },
+            "sigmaVV": {
+              "$ref": "#/definitions/product"
+            },
+            "coh": {
+              "$ref": "#/definitions/product"
+            },
+            "coh_avg": {
+              "$ref": "#/definitions/product"
+            },
+            "cohVH": {
+              "$ref": "#/definitions/product"
+            },
+            "cohVV": {
+              "$ref": "#/definitions/product"
+            }
+          }
+        },
+        "zone": {
+          "type": "array",
+          "maxItems": 2,
+          "minItems": 2,
+          "items": {
+            "type": "array",
+            "maxItems": 2,
+            "minItems": 2,
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "learn_channels": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "number"
+          }
+        },
+        "learn_gauss": {
+          "type": "number"
+        },
+        "predict_gauss": {
+          "type": "number"
+        },
+        "num_clusters": {
+          "type": "number"
+        },
+        "band_meta": {
+          "type": "array",
+          "description": "map of band id (order) to names and colors",
+          "items": {
+            "type": "object",
+            "properties": {
+              "band": {
+                "type": "number",
+                "description": "band ID (order)"
+              },
+              "name": {
+                "type": "string"
+              },
+              "color": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "band",
+              "name",
+              "color"
+            ]
+          }
+        },
+        "processing": {"type": "string"}
+      },
+
+
+      "required": [
+        "PREDICTOR_DIR",
+        "channels",
+        "learn_channels",
+        "num_clusters"
+      ]
+    }
+  }
+}
+
+

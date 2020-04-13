@@ -1,0 +1,200 @@
+{
+  "$id": "http://json-schema.org/draft-07/schema#",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "envelope": {
+
+      "description": "Task head (required by all tasks) fields",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "_rev": {
+          "type": "string"
+        },
+        "version": {
+          "type": "number",
+          "description": "recipe version as number major.minor, min supported is 1.1"
+        },
+        "type": {
+          "enum": [
+            "Cluster",
+            "Image"
+          ],
+          "description": "Cluster | Image - type of gui rendering"
+        },
+        "kind": {
+          "enum": [
+            "cluster"
+          ],
+          "description": "Kind of task"
+        },
+        "class": {
+          "enum": [
+            "S1"
+          ],
+          "description": "Class of task"
+        },
+        "friendly_name": {
+          "type": "string",
+          "description": "Friendly display name"
+        },
+        "DATADIR": {
+          "description": "directory with source files ",
+          "type": "string"
+        },
+        "OUTDIR": {
+          "description": "directory with result and intermediate files",
+          "type": "string"
+        },
+        "GEOJSON": {
+          "type": "object",
+          "description": "settings from result Geo-JSON file",
+          "properties": {
+            "schema": {
+              "enum": [
+                "Tangram"
+              ]
+            },
+            "band_map": {
+              "description": "map predictor bad-names c00-c0x to friendly names, {\"c00\":\"Water\"}",
+              "type": "object"
+            }
+          },
+          "if": {
+            "properties": {
+              "schema": {
+                "const": "Tangram"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "Raster"
+                ]
+              },
+              "tileSize": {
+                "type": "number",
+                "default": 512
+              },
+              "url": {
+                "type": "string",
+                "format": "uri-template"
+              },
+              "url_suffix": {
+                "type": "string",
+                "description": "suffix to add to the end of end-point url "
+              },
+              "url_subdomains": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-zA-Z0-9]+$"
+                },
+                "default": [
+                  "a",
+                  "b",
+                  "c",
+                  "d"
+                ]
+              },
+              "max_zoom": {
+                "type": "number",
+                "default": 24
+              },
+              "url_params": {
+                "description": "additional params appended to url query string, such as API key etc, key=value,key=value format",
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "if present, will be appended with COS.bucket/COS.ResultKey, otherwise will be build as  COS.endpoint/COS.bucket/COS.ResultKey"
+                  }
+                }
+              }
+            },
+            "required": [
+              "type",
+              "url"
+            ]
+          },
+          "else": {
+            "properties": {
+              "COGURL": {
+                "description": "URL template for Kepler viewer, this field injected as property into generated GeoJson file",
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "schema"
+          ]
+        },
+        "COS": {
+          "description": "Cloud Storage  settings",
+          "type": "object",
+          "properties": {
+            "endpoint": {
+              "format": "uri"
+            },
+            "type": {
+              "enum": [
+                "Creodias",
+                "IBM",
+                "AWS"
+              ],
+              "description": "Type of endpoint:    Creodias | IBM | AWS, default  IBM"
+            },
+            "bucket": {
+              "type": "string",
+              "description": "Bucket on COS"
+            },
+            "ResultKey": {
+              "type": "string",
+              "description": "file name without extension for results (GeoTIFF and Geojson) in bucket"
+            },
+            "credentials": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "endpoint",
+            "ResultKey",
+            "bucket"
+          ]
+        },
+        "tag": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "type": [ "string", "null" ]
+        },
+        "comment": {
+          "type": [ "string", "null" ]
+        },
+        "meta": {"type": "object"}
+      },
+
+
+      "required": [
+        "type",
+        "DATADIR",
+        "OUTDIR",
+        "friendly_name",
+        "kind",
+        "class"
+      ]
+    }
+  }
+}
+
+
