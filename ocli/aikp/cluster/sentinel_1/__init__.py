@@ -75,14 +75,14 @@ def get_stack_path(task:Task,full=False):
         if _e:
             e.append("stack_results: "+",".join(_e))
 
-    for k in ['master', 'slave', 'swath', 'firstBurstIndex', 'lastBurstIndex']:
+    for k in ['main', 'subordinate', 'swath', 'firstBurstIndex', 'lastBurstIndex']:
         _e = sentinel_1.validate_task(task, k)[1]
         if _e:
             e.append(f"{k} "+",".join(_e))
     if e:
         raise AssertionError(','.join(e))
-    master_id = s1_prod_id(task.config['master'])
-    slave_id = s1_prod_id(task.config['slave'])
-    snap_name = f"{master_id}_{slave_id}_{task.config['swath']}" + \
+    main_id = s1_prod_id(task.config['main'])
+    subordinate_id = s1_prod_id(task.config['subordinate'])
+    snap_name = f"{main_id}_{subordinate_id}_{task.config['swath']}" + \
                 f"_{task.config['firstBurstIndex']}_{task.config['lastBurstIndex']}"  # noqa
     return str(Path(task.config['stack_results'], snap_name).absolute()) if full else snap_name

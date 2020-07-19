@@ -23,9 +23,9 @@ log = logging.getLogger()
 def _task_ms(task: Task) -> (str, str):
     try:
         task.resolve()
-        _, _m = task.get_valid_key('master')
+        _, _m = task.get_valid_key('main')
         if task.kind == 'cluster':
-            _, _s = task.get_valid_key('slave')
+            _, _s = task.get_valid_key('subordinate')
         else:
             _s = None
         return _m, _s
@@ -34,7 +34,7 @@ def _task_ms(task: Task) -> (str, str):
         return None, None
 
 
-def _bkt_list(repo: Repo, master: str, slave: str, geometry: Polygon, fit: int) -> (GeoDataFrame, list):
+def _bkt_list(repo: Repo, main: str, subordinate: str, geometry: Polygon, fit: int) -> (GeoDataFrame, list):
     """ list avaliable buckets"""
     _df = pairs.load_from_cache(cache_file_name=(_cache_pairs_file_name(repo)))
     try:
@@ -53,7 +53,7 @@ def _bkt_list(repo: Repo, master: str, slave: str, geometry: Polygon, fit: int) 
         raise RuntimeError(e)
     headers = ['#', 'bucket', 'mean fit', 'from', 'to', 'Cnt']
 
-    if master or slave:
+    if main or subordinate:
 
         def _get_bucket_mytitle(t: str):
             _m = _bk.loc[_bk['title'] == t]
@@ -61,8 +61,8 @@ def _bkt_list(repo: Repo, master: str, slave: str, geometry: Polygon, fit: int) 
                 return _m.iloc[0]['bucket']
             return None
 
-        _m = _get_bucket_mytitle(master)
-        _s = _get_bucket_mytitle(slave)
+        _m = _get_bucket_mytitle(main)
+        _s = _get_bucket_mytitle(subordinate)
 
         def _ms(b):
             _x = 'm' if _m == b else ' '
@@ -153,7 +153,7 @@ def bucket_cli():
 @option_locate_task
 @option_roi
 @click.option('--check', 'check', is_flag=True, required=False, default=False,
-              help='Check master-slave data exists')
+              help='Check main-subordinate data exists')
 @click.option('--update', '-u', 'reload', is_flag=True, required=False, default=False, help='force products load')
 @click.argument('bucket_name', metavar='<BUCKET_NAME | RECORD>')
 @products_list_options(def_col=None, def_sort=['+startDate'])
@@ -200,7 +200,7 @@ def bkt_info(ctx, repo, task: Task, roi_id, bucket_name, reload, less, sort, lim
     if task.loaded:
         output.comment(f"Task: {task.name}")
         if 'task' in cols:
-            output.comment(f"INFO: 'task'   column:  'm' -  used as master in task, 's' - used as slave in task  ")
+            output.comment(f"INFO: 'task'   column:  'm' -  used as main in task, 's' - used as subordinate in task  ")
         if 'exists' in cols:
             output.comment(f"INFO: 'exists' column:  '+' -  full data loaded, '~' - metadata only loaded")
 
@@ -215,7 +215,7 @@ def bkt_info(ctx, repo, task: Task, roi_id, bucket_name, reload, less, sort, lim
 @option_locate_task
 @option_roi
 @click.option('--check', 'check', is_flag=True, required=False, default=False,
-              help='Check master-slave data exists')
+              help='Check main-subordinate data exists')
 # @products_list_options(def_col=['productId', 'startDate', 'title'], def_sort=['+startDate'])
 @option_less
 @click.argument('product_id', metavar="PRODUCT_ID")
@@ -235,7 +235,7 @@ def bkt_info(repo: Repo, task: Task, roi_id, less,
     _id, _roi = resolve_roi(roi_id, repo)
     _m, _s = _task_ms(task)
     geometry = _roi['geometry']
-    output.comment(f"active task master: {_m}")
+    output.comment(f"active task main: {_m}")
 
     _df = pairs.load_from_cache(cache_file_name=(_cache_pairs_file_name(repo)))
     _df = _df.set_index('productId')
@@ -272,11 +272,11 @@ def bkt_info(repo: Repo, task: Task, roi_id, less,
         if _m in _df.index:
             _df.loc[_m, 'task'] = 'm'
         else:
-            output.warning('Current task master not found in bucket')
+            output.warning('Current task main not found in bucket')
         if _s in _df.index:
             _df.loc[_s, 'task'] = 's'
         else:
-            output.warning('Current task slave  not found in bucket')
+            output.warning('Current task subordinate  not found in bucket')
         _df = _df.reset_index()
         _e, eodata = task.get_valid_key('eodata')
 
@@ -301,7 +301,7 @@ def bkt_info(repo: Repo, task: Task, roi_id, less,
     headers = ['#'] + cols
     output.table(_df, headers=headers, )
 
-    # if master or slave:
+    # if main or subordinate:
     #
     #     def _get_bucket_mytitle(t: str):
     #         _m = _bk.loc[_bk['title'] == t]
@@ -309,8 +309,8 @@ def bkt_info(repo: Repo, task: Task, roi_id, less,
     #             return _m.iloc[0]['bucket']
     #         return None
     #
-    #     _m = _get_bucket_mytitle(master)
-    #     _s = _get_bucket_mytitle(slave)
+    #     _m = _get_bucket_mytitle(main)
+    #     _s = _get_bucket_mytitle(subordinate)
     #
     #     def _ms(b):
     #         _x = 'm' if _m == b else ' '
@@ -345,8 +345,8 @@ def bkt_list(ctx: click.Context, repo: Repo, task: Task, roi_id, reload, fit):
         _t, headers = _bkt_list(repo,
                                 geometry=_roi['geometry'],
                                 fit=fit,
-                                master=_m,
-                                slave=_s,
+                                main=_m,
+                                subordinate=_s,
                                 )
     except RuntimeError as e:
         raise click.UsageError(str(e))

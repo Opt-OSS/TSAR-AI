@@ -625,7 +625,7 @@ class Task(object):
     @ensure_task_loaded
     def validate(self, key):
         config = self.config
-        # TODO validate master-slave is in
+        # TODO validate main-subordinate is in
         if key not in config:
             raise click.BadArgumentUsage(f'Could not validate Key {key}: key not found')
         value = config[key]
@@ -687,10 +687,10 @@ class Task(object):
         return _l
 
     @ensure_task_loaded
-    def get_geometry_fit_data_frame(self, geometry, key='master') -> 'gpd.pd.DataFrame':
+    def get_geometry_fit_data_frame(self, geometry, key='main') -> 'gpd.pd.DataFrame':
         # TODO use validate_all
-        if key not in ['master', 'slave']:
-            raise AssertionError("key: only 'master' or 'salve are supported'")
+        if key not in ['main', 'subordinate']:
+            raise AssertionError("key: only 'main' or 'salve are supported'")
         for k in ['eodata', key + '_path']:
             e = self.validate(k)
             if e:
@@ -707,8 +707,8 @@ class Task(object):
 
             format is :
 
-               cluster Sentinel-1: <masterID>_<slaveID>_<swath>_<firstBurstIndex>_<lastBurstIndex>
-               rvi Sentinel-1: <masterID>_<swath>_<firstBurstIndex>_<lastBurstIndex>
+               cluster Sentinel-1: <mainID>_<subordinateID>_<swath>_<firstBurstIndex>_<lastBurstIndex>
+               rvi Sentinel-1: <mainID>_<swath>_<firstBurstIndex>_<lastBurstIndex>
 
             if full==True os.join with  with <task.config.stack_results>
         """
@@ -730,19 +730,19 @@ class Task(object):
         # kind = self.config['kind']
         # source = self.config['source']
         # if kind == 'cluster' and source == 'Sentinel-1':
-        #     e = self.validate_all(['stack_results', 'master', 'slave', 'swath', 'firstBurstIndex', 'lastBurstIndex'])
+        #     e = self.validate_all(['stack_results', 'main', 'subordinate', 'swath', 'firstBurstIndex', 'lastBurstIndex'])
         #     if e:
         #         raise AssertionError(','.join(e))
-        #     master_id = s1_prod_id(self.config['master'])
-        #     slave_id = s1_prod_id(self.config['slave'])
-        #     snap_name = f"{master_id}_{slave_id}_{self.config['swath']}" + \
+        #     main_id = s1_prod_id(self.config['main'])
+        #     subordinate_id = s1_prod_id(self.config['subordinate'])
+        #     snap_name = f"{main_id}_{subordinate_id}_{self.config['swath']}" + \
         #                 f"_{self.config['firstBurstIndex']}_{self.config['lastBurstIndex']}"  # noqa
         # elif kind == 'rvi' and source == 'Sentinel-1':
-        #     e = self.validate_all(['stack_results', 'master', 'swath', 'firstBurstIndex', 'lastBurstIndex'])
+        #     e = self.validate_all(['stack_results', 'main', 'swath', 'firstBurstIndex', 'lastBurstIndex'])
         #     if e:
         #         raise AssertionError(','.join(e))
-        #     master_id = s1_prod_id(self.config['master'])
-        #     snap_name = f"{master_id}_{self.config['swath']}" + \
+        #     main_id = s1_prod_id(self.config['main'])
+        #     snap_name = f"{main_id}_{self.config['swath']}" + \
         #                 f"_{self.config['firstBurstIndex']}_{self.config['lastBurstIndex']}"  # noqa
         # else:
         #     raise AssertionError(f'Could not build path for task config  kind "{kind}" and source {source} ')
@@ -750,23 +750,23 @@ class Task(object):
 
     @ensure_task_loaded
     def _compose_friendly_keys(self, roi_name):
-        e, master = self.get_valid_key('master')
-        prod_fields = {'m_' + k: v for (k, v) in parse_title(master).items()}
-        prod_fields = {**prod_fields, **{'m_' + k: v for (k, v) in parse_title(master).items()}}
-        prod_fields['m_id'] = s1_prod_id(master)
+        e, main = self.get_valid_key('main')
+        prod_fields = {'m_' + k: v for (k, v) in parse_title(main).items()}
+        prod_fields = {**prod_fields, **{'m_' + k: v for (k, v) in parse_title(main).items()}}
+        prod_fields['m_id'] = s1_prod_id(main)
 
         prod_fields['s_id'] = ''
         if self.kind == 'cluster':
-            e, slave = self.get_valid_key('slave')
-            prod_fields = {**prod_fields, **{'s_' + k: v for (k, v) in parse_title(slave).items()}}
-            prod_fields['s_id'] = s1_prod_id(slave)
+            e, subordinate = self.get_valid_key('subordinate')
+            prod_fields = {**prod_fields, **{'s_' + k: v for (k, v) in parse_title(subordinate).items()}}
+            prod_fields['s_id'] = s1_prod_id(subordinate)
         fields = {**self.config, **prod_fields}
         fields['predictor'] = fields['predictor'].split('/')[-1]
         fields['roi'] = roi_name
         return fields
 
     def format_pattern(self, key, roi_name):
-        ms = ['master', 'slave'] if self.kind == 'cluster' else ['master']
+        ms = ['main', 'subordinate'] if self.kind == 'cluster' else ['main']
         e = self.validate_all(ms)
         if e:
             raise AssertionError(','.join(e))

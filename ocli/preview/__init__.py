@@ -111,8 +111,8 @@ def preview_roi_swath(df, roi, title='', zoom=8, basemap=None, roi_crs={'init': 
             continue
         df.set_geometry(_iw, inplace=True)
         iw = df[df[_iw].notna()].to_crs(crs_proj4)
-        for i, v in enumerate([[True, 'master'], [False, 'slave']]):
-            _d = iw[iw['master'] == v[0]]
+        for i, v in enumerate([[True, 'main'], [False, 'subordinate']]):
+            _d = iw[iw['main'] == v[0]]
 
             if burst_range:
                 _d = _d.iloc[burst_range[0] - 1:burst_range[1]]
