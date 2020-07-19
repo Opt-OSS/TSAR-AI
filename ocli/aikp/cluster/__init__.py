@@ -30,10 +30,10 @@ TASK_KIND_CLUSTER = {
     'eodata': None,
     'ai_results': '/optoss/out',
     'stack_results': '/optoss/stack',
-    'slave': None,
-    'slave_path': None,
-    'master': None,
-    'master_path': None,
+    'subordinate': None,
+    'subordinate_path': None,
+    'main': None,
+    'main_path': None,
 }
 
 RECIPE_CLUSTER_TPL = {
@@ -282,9 +282,9 @@ def validate_task(task, key)->(bool,List[str]):
                     errors.append('Not found')
                 elif not os.access(value, os.W_OK):
                     errors.append('Not writable')
-            elif key in ['master', 'slave'] and not value:
+            elif key in ['main', 'subordinate'] and not value:
                 errors.append(REQUIRED)
-            elif key in ['master_path', 'slave_path']:
+            elif key in ['main_path', 'subordinate_path']:
                 if value is None:
                     errors.append(REQUIRED)
                 elif _eodata is None:
@@ -302,7 +302,7 @@ def task_set(task: Task, d: Dict):
         if k in d:
             value = d[k]  # type: string
             """set new value"""
-            if k in ['master', 'slave']:
+            if k in ['main', 'subordinate']:
                 cache_file_name = _cache_pairs_file_name(task)
 
                 try:

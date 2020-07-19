@@ -369,11 +369,11 @@ def task_preview(repo: Repo, task: Task, roi_id, swath, basemap,
             # show by product lists
             cache_file_name = _cache_pairs_file_name(repo)
             _df = pairs.load_from_cache(cache_file_name=cache_file_name)
-            _e, m = task.get_valid_key('master')
+            _e, m = task.get_valid_key('main')
             s = None
             title = f"M: {m}"
-            if task.config.get('slave') is not None:
-                _e, s = task.get_valid_key('slave')
+            if task.config.get('subordinate') is not None:
+                _e, s = task.get_valid_key('subordinate')
                 title += f"\nS: {s}"
             df = _df[_df['title'].isin([m, s])]
             preview_roi(df, _roi, title=title, zoom=zoom_basemap, basemap=basemap)
@@ -381,28 +381,28 @@ def task_preview(repo: Repo, task: Task, roi_id, swath, basemap,
         else:
             # thos requires metadata to be loaded
             try:
-                _e, m = task.get_valid_key('master')
+                _e, m = task.get_valid_key('main')
                 title = f"M: {m}"
-                df_master = task.get_geometry_fit_data_frame(_roi.geometry, key='master')
-                df_master['master'] = True
-                fit = df_master[['IW1_fit', 'IW2_fit', 'IW3_fit']]
+                df_main = task.get_geometry_fit_data_frame(_roi.geometry, key='main')
+                df_main['main'] = True
+                fit = df_main[['IW1_fit', 'IW2_fit', 'IW3_fit']]
                 output.comment(f"MASTER ROI '{_roi['name']}': coverage by Swath/Burst\n\n")
                 output.table(fit, headers=['burst', 'IW1', 'IW2', 'IW3'])
                 output.comment("\n\n")
                 output.table(gpd.pd.DataFrame(fit.sum()), headers=['Swath', 'total fit'])
-                df = df_master
-                df.crs = df_master.crs
-                if task.config.get('slave') is not None:
-                    _e, s = task.get_valid_key('slave')
+                df = df_main
+                df.crs = df_main.crs
+                if task.config.get('subordinate') is not None:
+                    _e, s = task.get_valid_key('subordinate')
                     title += f"\nS: {s}"
                     if _e:
-                        raise click.BadParameter(f'Task key "slave" is invalid: {_e}')
-                    df_slave = task.get_geometry_fit_data_frame(_roi.geometry, key='slave')
-                    df_slave['master'] = False
-                    fit = df_slave[['IW1_fit', 'IW2_fit', 'IW3_fit']]
+                        raise click.BadParameter(f'Task key "subordinate" is invalid: {_e}')
+                    df_subordinate = task.get_geometry_fit_data_frame(_roi.geometry, key='subordinate')
+                    df_subordinate['main'] = False
+                    fit = df_subordinate[['IW1_fit', 'IW2_fit', 'IW3_fit']]
                     output.comment(f"SLAVE ROI '{_roi['name']}': coverage by Swath/Burst\n\n")
-                    df = gpd.pd.concat([df, df_slave])
-                    df.crs = df_master.crs
+                    df = gpd.pd.concat([df, df_subordinate])
+                    df.crs = df_main.crs
 
                 output.table(fit, headers=['burst', 'IW1', 'IW2', 'IW3'])
                 output.comment("\n\n")
@@ -451,8 +451,8 @@ def task_info(repo: Repo, task: Task, swath, roi_id,
     """ show task information
 
     \b
-    --preview requires master and slave to be  in product list
-    --swath option requires master and slave metadata to be loaded
+    --preview requires main and subordinate to be  in product list
+    --swath option requires main and subordinate metadata to be loaded
     """
 
     # TODO -q option to return just valididty status
@@ -492,17 +492,17 @@ def task_info(repo: Repo, task: Task, swath, roi_id,
     elif swath:
         _id, _roi = resolve_roi(roi_id, repo)
         try:
-            df_master = task.get_geometry_fit_data_frame(_roi.geometry, key='master')
-            df_master['master'] = True
-            fit = df_master[['IW1_fit', 'IW2_fit', 'IW3_fit']]
+            df_main = task.get_geometry_fit_data_frame(_roi.geometry, key='main')
+            df_main['main'] = True
+            fit = df_main[['IW1_fit', 'IW2_fit', 'IW3_fit']]
             output.comment(f"MASTER ROI '{_roi['name']}': coverage by Swath/Burst\n\n")
             output.table(fit, headers=['burst', 'IW1', 'IW2', 'IW3'])
             output.comment("\n\n")
             output.table(gpd.pd.DataFrame(fit.sum()), headers=['Swath', 'total fit'])
-            if task.config.get('slave') is not None:
-                df_slave = task.get_geometry_fit_data_frame(_roi.geometry, key='slave')
-                df_slave['master'] = False
-                fit = df_slave[['IW1_fit', 'IW2_fit', 'IW3_fit']]
+            if task.config.get('subordinate') is not None:
+                df_subordinate = task.get_geometry_fit_data_frame(_roi.geometry, key='subordinate')
+                df_subordinate['main'] = False
+                fit = df_subordinate[['IW1_fit', 'IW2_fit', 'IW3_fit']]
                 output.comment(f"SLAVE ROI '{_roi['name']}': coverage by Swath/Burst\n\n")
                 output.table(fit, headers=['burst', 'IW1', 'IW2', 'IW3'])
             output.comment("\n\n")
@@ -541,19 +541,19 @@ def task_info(repo: Repo, task: Task, swath, roi_id,
         except AssertionError as e:
             output.error(f"ai_results  {e}")
         if task.kind == 'cluster':
-            if not task.validate_all(['master', 'slave']):
+            if not task.validate_all(['main', 'subordinate']):
                 S1_cycle_T = 24 * 3600 * 12
-                m = parse_title(task.config['master'])['completionDate']
-                s = parse_title(task.config['slave'])['completionDate']
+                m = parse_title(task.config['main'])['completionDate']
+                s = parse_title(task.config['subordinate'])['completionDate']
 
                 cycle_dt = abs((m - s) / timedelta(seconds=1)) % S1_cycle_T
                 cycle_dt = cycle_dt if (cycle_dt <= S1_cycle_T / 2) else S1_cycle_T - cycle_dt
                 if cycle_dt > 0.1:
                     output.warning(
-                        f'timedelta: master-slave timedelta {cycle_dt} > 0.1. Acquisitions could be misaligned')
+                        f'timedelta: main-subordinate timedelta {cycle_dt} > 0.1. Acquisitions could be misaligned')
                 else:
                     output.comment(
-                        f'timedelta: master-slave timedelta {cycle_dt} <= 0.1. Acquisitions could be aligned')
+                        f'timedelta: main-subordinate timedelta {cycle_dt} <= 0.1. Acquisitions could be aligned')
             else:
                 output.comment("bucket delta")
         output.comment(f"errors:  {_l['error'].notna().sum()}")
@@ -657,8 +657,8 @@ def task_get(repo: Repo, task: Task, key, raw, roi_id, info):
         returns parsed or extended values
 
         transformed keys:
-            master - returns master product ID
-            slave -  returns master product ID
+            main - returns main product ID
+            subordinate -  returns main product ID
 
         Example: ls -lastr $( ocli -v INFO t get-key ai_results --parsed )
             outputs content of active task ai_results directory
@@ -681,9 +681,9 @@ def task_get(repo: Repo, task: Task, key, raw, roi_id, info):
                 value = task.get_ai_results_path(full=True)
             elif key == 'stack_results':
                 value = task.get_stack_path(full=True)
-            elif key in ['master', 'slave']:
+            elif key in ['main', 'subordinate']:
                 value = s1_prod_id(task.config[key])
-            elif key in ['master_path', 'slave_path']:
+            elif key in ['main_path', 'subordinate_path']:
                 value = _local_eodata_relative_path(task.config['eodata'], task.config[key])
             elif key == 'friendly_name':
                 _, roi = resolve_roi(roi_id, repo)
@@ -761,21 +761,21 @@ def rsync_meta(options: List[str], remote_path: str, local_path: str):
 @cli_task.command('get-data')
 @option_locate_task
 @click.option('-d', '--data', 'data', is_flag=True, default=False, help='load meta-data and data')
-@click.option('-m', '--master', is_flag=True, default=False, help='load master')
-@click.option('-s', '--slave', is_flag=True, default=False, help='load slave')
+@click.option('-m', '--main', is_flag=True, default=False, help='load main')
+@click.option('-s', '--subordinate', is_flag=True, default=False, help='load subordinate')
 @click.option('--dry-run', is_flag=True, default=False, help='dry-run, do not perform actual download')
 @pass_task
 @ensure_task_resolved
-def task_get(task: Task, data, master, slave, dry_run):
+def task_get(task: Task, data, main, subordinate, dry_run):
     """ load satellite date into task.eodata directory"""
     # Zsh and other crazy shells extends patterns passed arguments, so be shure rsync runs in BASH!!!
     if task.config.get('source') != 'Sentinel-1':
         raise click.BadParameter(f"Only Sentinel-1 supported for now, task source is {task.get_valid_key('source')}")
-    if not master and not slave:
-        raise click.BadOptionUsage('master', "at least on of  --master or --salve option is required")
-    ks = ['eodata', 'master']
+    if not main and not subordinate:
+        raise click.BadOptionUsage('main', "at least on of  --main or --salve option is required")
+    ks = ['eodata', 'main']
     if task.kind == 'cluster':
-        ks.append('slave')
+        ks.append('subordinate')
     for k in ks:
         e = task.validate(k)
         if e is not None:
@@ -815,32 +815,32 @@ def task_get(task: Task, data, master, slave, dry_run):
         opts.append("--exclude 'preview/*'")
         opts.append("--exclude 'annotation/calibration/*'")
     opts.append("--exclude '*.tiff'")
-    if master:
-        _rsync_meta('master', task, opts)
-    if slave:
-        _rsync_meta('slave', task, opts)
+    if main:
+        _rsync_meta('main', task, opts)
+    if subordinate:
+        _rsync_meta('subordinate', task, opts)
 
 
 # ######################### LS #############################################
 @cli_task.command('ls')
 @option_locate_task
-@click.option('-m', '--master', is_flag=True, default=False, help='list master directory')
-@click.option('-s', '--slave', is_flag=True, default=False, help='list  slave directory')
+@click.option('-m', '--main', is_flag=True, default=False, help='list main directory')
+@click.option('-s', '--subordinate', is_flag=True, default=False, help='list  subordinate directory')
 @click.option('-a', '--list_all', is_flag=True, default=False, help='list  all task directories')
-@click.option('--ai', 'ai_results', is_flag=True, default=False, help='list  slave directory')
-@click.option('--stack', 'stack_results', is_flag=True, default=False, help='list  slave directory')
+@click.option('--ai', 'ai_results', is_flag=True, default=False, help='list  subordinate directory')
+@click.option('--stack', 'stack_results', is_flag=True, default=False, help='list  subordinate directory')
 @click.option('-t', '--terse', is_flag=True, default=False, help='terse output')
 @pass_task
 @ensure_task_resolved
-def task_ls(task: Task, master, slave, ai_results, stack_results, terse, list_all):
-    """ list content of task master or slave directory"""
+def task_ls(task: Task, main, subordinate, ai_results, stack_results, terse, list_all):
+    """ list content of task main or subordinate directory"""
 
     def comment(str):
         if not terse:
             output.comment(str)
 
     e, eo_data = task.get_valid_key('eodata')
-    if not any([master, slave, ai_results, stack_results, list_all]):
+    if not any([main, subordinate, ai_results, stack_results, list_all]):
         list_all = terse = True
     if terse:
         cmd = ['du', '-shc']
@@ -850,20 +850,20 @@ def task_ls(task: Task, master, slave, ai_results, stack_results, terse, list_al
         raise click.BadArgumentUsage(f"Task config key 'eodata' is invalid, reason: {','.join(e)}")
     paths = []
     _, kind = task.get_valid_key('kind')
-    if list_all or master:
-        e, _m = task.get_valid_key('master_path')
+    if list_all or main:
+        e, _m = task.get_valid_key('main_path')
         if e:
-            raise click.BadArgumentUsage(f"Task config key 'master_path' is invalid, reason: {','.join(e)}")
+            raise click.BadArgumentUsage(f"Task config key 'main_path' is invalid, reason: {','.join(e)}")
         _p = _local_eodata_relative_path(eo_data, _m)
-        comment(f"master path: {_p}\n\n")
+        comment(f"main path: {_p}\n\n")
         paths += [_p]
-    if kind in ['cluster'] and (list_all or slave):
+    if kind in ['cluster'] and (list_all or subordinate):
 
-        e, _s = task.get_valid_key('slave_path')
+        e, _s = task.get_valid_key('subordinate_path')
         if e:
-            raise click.BadArgumentUsage(f"Task config key  'slave_path' is invalid, reason: {','.join(e)}")
+            raise click.BadArgumentUsage(f"Task config key  'subordinate_path' is invalid, reason: {','.join(e)}")
         _p = _local_eodata_relative_path(eo_data, _s)
-        comment(f"master path: {_p}\n\n")
+        comment(f"main path: {_p}\n\n")
         paths += [_p]
     if list_all or ai_results:
         try:
@@ -892,11 +892,11 @@ def task_ls(task: Task, master, slave, ai_results, stack_results, terse, list_al
 @cli_task.command('clear')
 @option_yes
 @click.option('-d', '--data', 'data', is_flag=True, default=False, help='clear meta-data and data')
-@click.option('-m', '--master', is_flag=True, default=False, help='clear master')
-@click.option('-s', '--slave', is_flag=True, default=False, help='clear slave')
+@click.option('-m', '--main', is_flag=True, default=False, help='clear main')
+@click.option('-s', '--subordinate', is_flag=True, default=False, help='clear subordinate')
 @pass_task
 @ensure_task_resolved
-def task_clear(task: Task, master, slave, data, yes):
+def task_clear(task: Task, main, subordinate, data, yes):
     """ delete task data and results"""
 
     e, eo_data = task.get_valid_key('eodata')
@@ -914,11 +914,11 @@ def task_clear(task: Task, master, slave, data, yes):
             raise click.UsageError(f"{er}")
 
     if data & yes_or_confirm(yes, f'Remove all product data for task {task.name}?'):
-        if master:
-            __clear_data('master_path')
-        if slave:
-            __clear_data('slave_path')
-    if master or slave:
+        if main:
+            __clear_data('main_path')
+        if subordinate:
+            __clear_data('subordinate_path')
+    if main or subordinate:
         # TODO clean snap and AI out data
         output.comment("Not implemented - remove SNAP intermediate data")
         output.comment("Not implemented - remove AI out data")
@@ -1071,14 +1071,14 @@ def task_run_stack_sarpy(repo: Repo, task: Task, yes, dry_run, decimation, no_cl
         if single:
             click.get_current_context().invoke(
                 single_stack,
-                master=_local_eodata_relative_path(_eodata, task.config['master_path']),
+                main=_local_eodata_relative_path(_eodata, task.config['main_path']),
                 **kw
             )
         else:
             click.get_current_context().invoke(
                 full_stack,
-                master=_local_eodata_relative_path(_eodata, task.config['master_path']),
-                slave=_local_eodata_relative_path(_eodata, task.config['slave_path']),
+                main=_local_eodata_relative_path(_eodata, task.config['main_path']),
+                subordinate=_local_eodata_relative_path(_eodata, task.config['subordinate_path']),
                 **kw
             )
         p0 = perf_counter() - p0

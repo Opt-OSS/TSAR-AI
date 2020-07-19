@@ -199,7 +199,7 @@ COMMON_MATH_TENSOR_HELP = """
            ---------------------------  ---------  ------------ ----------  --------------------
            raw              3           b1          b2          b3          usable for histograms (--hist)
            composite        3           b1          b2          b3          b1-coh, b2-VV, b3-VH (same as raw)
-           sar              3           b1          (b2+b3)/2   b2-b3       b1-coh, b2-master, b3-slave (use the same polarization)
+           sar              3           b1          (b2+b3)/2   b2-b3       b1-coh, b2-main, b3-subordinate (use the same polarization)
            simple           2           b1          b2          b1/b2       (VV, VH,  VV/VH)
            rgb-ratio        2           b1          2*b2        (b1/b2)/100   (VV, 2VH, VV/VH/100)
            rgb-diff         2           b1          b2          b1-b2       (VH, VV,  VH-VV)
@@ -217,9 +217,9 @@ COMMON_MATH_STACK_HELP = """
     --vis:                bands         R           G                    B                     comment
            ---------------------------  ---------  ------------          ----------      --------------------
            raw              3           b1          b2                   b3              useful for histograms (--hist)
-           sar              3           b1          (lg(b2)+lg(b3))/2    lg(b2)-lg(b3)   b1-coh, b2-master, b3-slave (use the same polarization)
-           composite-u      3           lg(b1)      lg(b2)               b3              b1-master, b2-slave, b3-coh (use the same polarization)   
-           composite        3           b1          lg(b2)               lg(b3)          b1-coh, b2-slave, b3-master (use the same polarization)   
+           sar              3           b1          (lg(b2)+lg(b3))/2    lg(b2)-lg(b3)   b1-coh, b2-main, b3-subordinate (use the same polarization)
+           composite-u      3           lg(b1)      lg(b2)               b3              b1-main, b2-subordinate, b3-coh (use the same polarization)   
+           composite        3           b1          lg(b2)               lg(b3)          b1-coh, b2-subordinate, b3-main (use the same polarization)   
            false-color      2           b1=VH       b2=VV
            false-color-enhanced                                                         - same params  as for false-color
 

@@ -6,7 +6,7 @@ from ocli.project import _local_eodata_relative_path
 
 def task_stack_snap(task: Task, dry_run, gpt_cache,cmd_dir,log):
     # TODO http://remote-sensing.eu/preprocessing-of-sentinel-1-sar-data-via-snappy-python-module/
-    """ Run master-slave Stacking
+    """ Run main-subordinate Stacking
 
     """
     snap_path = task.get_stack_path(full=True)
@@ -24,8 +24,8 @@ def task_stack_snap(task: Task, dry_run, gpt_cache,cmd_dir,log):
         '--firstBurstIndex', task.config['firstBurstIndex'],
         '--lastBurstIndex', task.config['lastBurstIndex'],
 
-        '--master', _local_eodata_relative_path(_eodata, task.config['master_path']),
-        '--slave', _local_eodata_relative_path(_eodata, task.config['slave_path']),
+        '--main', _local_eodata_relative_path(_eodata, task.config['main_path']),
+        '--subordinate', _local_eodata_relative_path(_eodata, task.config['subordinate_path']),
 
     ]
 
